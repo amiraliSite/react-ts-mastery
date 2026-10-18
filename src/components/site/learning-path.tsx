@@ -3,8 +3,9 @@
 import * as React from "react"
 import { motion, AnimatePresence, useInView } from "framer-motion"
 import { chapters, type Difficulty } from "@/lib/curriculum"
-import { ChevronDown, Clock, BookOpen, Check } from "lucide-react"
+import { ChevronDown, Clock, BookOpen, Check, ArrowRight } from "lucide-react"
 import { useLang } from "./language-provider"
+import { ChapterModal } from "./chapter-modal"
 
 const diffColor: Record<Difficulty, string> = {
   Beginner: "text-green-400 border-green-400/30 bg-green-400/10",
@@ -38,7 +39,15 @@ function useProgress() {
   return { done, toggle }
 }
 
-function ChapterCard({ ch, i }: { ch: typeof chapters[number]; i: number }) {
+function ChapterCard({
+  ch,
+  i,
+  onOpen,
+}: {
+  ch: typeof chapters[number]
+  i: number
+  onOpen: (id: string) => void
+}) {
   const { lang, t } = useLang()
   const ref = React.useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: "-60px" })
@@ -126,6 +135,15 @@ function ChapterCard({ ch, i }: { ch: typeof chapters[number]; i: number }) {
               </ul>
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
+                {/* Start chapter — opens the modal */}
+                <button
+                  onClick={() => onOpen(ch.id)}
+                  className="group inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-foreground hover:gap-3"
+                >
+                  {lang === "fa" ? "شروع فصل" : "Start chapter"}
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+                </button>
+
                 <button
                   onClick={() => toggle(ch.id)}
                   className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors ${
@@ -144,6 +162,7 @@ function ChapterCard({ ch, i }: { ch: typeof chapters[number]; i: number }) {
                     </>
                   )}
                 </button>
+
                 <a href="#demos" className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium text-foreground/70 hover:text-accent">
                   {t("path.seeDemo")}
                 </a>
@@ -159,6 +178,7 @@ function ChapterCard({ ch, i }: { ch: typeof chapters[number]; i: number }) {
 export function LearningPath() {
   const { t } = useLang()
   const { done } = useProgress()
+  const [modalChapterId, setModalChapterId] = React.useState<string | null>(null)
   const pct = Math.round((done.size / chapters.length) * 100)
 
   return (
@@ -217,10 +237,12 @@ export function LearningPath() {
 
         <div className="grid grid-cols-1 gap-3">
           {chapters.map((ch, i) => (
-            <ChapterCard key={ch.id} ch={ch} i={i} />
+            <ChapterCard key={ch.id} ch={ch} i={i} onOpen={setModalChapterId} />
           ))}
         </div>
       </div>
+
+      <ChapterModal chapterId={modalChapterId} onClose={() => setModalChapterId(null)} />
     </section>
   )
 }
